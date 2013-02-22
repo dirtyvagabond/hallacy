@@ -5,7 +5,13 @@
   (:use [ring.adapter.jetty :only [run-jetty]]
         [ring.middleware.params]))
 
-(let [{:keys [key secret]} (conf/dot-factual "factual-auth.yaml")]
+(defn secrets []
+  (if (empty? (System/getenv "FACTUAL_KEY"))
+    (conf/dot-factual "factual-auth.yaml")
+    {:key (System/getenv "FACTUAL_KEY")
+     :secret (System/getenv "FACTUAL_SECRET")}))
+
+(let [{:keys [key secret]} (secrets)]
        (facts/factual! key secret))
 
 (defn get-places [query]
@@ -54,8 +60,8 @@
                               "text/plain"
                               "application/mixare-json")}
    :body
-   ;;(slurp "hallacy.json")
-   (get-places-body (params->query params))
+   (slurp "brandon.json")
+   ;;(get-places-body (params->query params))
 
    })
 
