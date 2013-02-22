@@ -6,6 +6,7 @@
         [ring.middleware.params]))
 
 (defn secrets []
+  (println "ENV/FACTUAL_KEY:" (System/getenv "FACTUAL_KEY"))
   (if (empty? (System/getenv "FACTUAL_KEY"))
     (conf/dot-factual "factual-auth.yaml")
     {:key (System/getenv "FACTUAL_KEY")
