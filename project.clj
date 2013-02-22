@@ -11,6 +11,7 @@
                  [commons-codec "1.6"]
                  [commons-logging "1.1.1"]
                  [commons-httpclient "3.1"]
+                 [com.google.guava/guava "13.0.1"]
                  [org.apache.httpcomponents/httpclient "4.2.3"]
                  [ring/ring-jetty-adapter "1.1.6"]]
   :ring {:handler hallacy.core/handler}

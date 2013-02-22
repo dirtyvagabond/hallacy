@@ -20,7 +20,14 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 public class Elevation implements ElevationCalculator{
+
+	Cache<String, Double> cache = CacheBuilder.newBuilder()
+			.maximumSize(25000)
+			.build();
 
 	public static void main(String[] args) {
 		Elevation elev = new Elevation();
@@ -64,15 +71,46 @@ public class Elevation implements ElevationCalculator{
 	private HashMap<String, Double> getElevationsFromAPI(
 			List<String> coordinates) throws ClientProtocolException, IOException {
 		ArrayList<Double> elevations = new ArrayList<Double>();
-		String queryUrl = generateQueryURL(coordinates);
-		HttpEntity elevationAPIResponseEntity = queryAPIServer(queryUrl);
-		if (elevationAPIResponseEntity != null) {
-			StringBuffer elevationAPIResponseString = parseResponse(elevationAPIResponseEntity);
-			elevations = parseJsonResponse(elevationAPIResponseString);
-			return createcoordinatePairsToElevationsMap(coordinates, elevations);
-		}else{
-			return new HashMap<String, Double>();
+
+		HashMap<String, Double> results = getResultsFromCache(coordinates);
+		coordinates = removeCachedCoordinates(results, coordinates);
+
+		if(coordinates.size() > 0){
+			System.out.println(coordinates);
+			String queryUrl = generateQueryURL(coordinates);
+			HttpEntity elevationAPIResponseEntity = queryAPIServer(queryUrl);
+			if (elevationAPIResponseEntity != null) {
+				StringBuffer elevationAPIResponseString = parseResponse(elevationAPIResponseEntity);
+				elevations = parseJsonResponse(elevationAPIResponseString);
+				results.putAll(createcoordinatePairsToElevationsMap(coordinates, elevations));
+			}
 		}
+		for(String coordinate: results.keySet()){
+			cache.put(coordinate, results.get(coordinate));
+		}
+		
+		return results;
+	}
+
+	private List<String> removeCachedCoordinates( //TODO: Change this (and everything else) to operate on a set of coord strings instead of a list
+			HashMap<String, Double> results, List<String> coordinates) {
+		for(String coordinate: results.keySet()){
+			while(coordinates.contains(coordinate)){
+				coordinates.remove(coordinate);
+			}
+		}
+		return coordinates;
+	}
+
+	private HashMap<String, Double> getResultsFromCache(List<String> coordinates) {
+		HashMap<String, Double> cachedResults = new HashMap<String, Double>();
+		for(String coordinate: coordinates){
+			Double result = cache.getIfPresent(coordinate);
+			if(result != null){
+				cachedResults.put(coordinate, result);
+			}
+		}
+		return cachedResults;
 	}
 
 	private HttpEntity queryAPIServer(String queryUrl) throws ClientProtocolException, IOException {
@@ -104,6 +142,9 @@ public class Elevation implements ElevationCalculator{
 	}
 
 	private String generateQueryURL(List<String> coordinates) {
+
+
+
 		String url = "http://maps.googleapis.com/maps/api/elevation/"
 				+ "json?locations=";
 		boolean first = true;
@@ -132,3 +173,4 @@ public class Elevation implements ElevationCalculator{
 	}
 
 }
+
