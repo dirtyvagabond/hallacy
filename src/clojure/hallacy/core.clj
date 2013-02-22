@@ -4,24 +4,20 @@
             [sosueme.conf :as conf])
   (:use [hallacy.elevations]
         [ring.adapter.jetty :only [run-jetty]]
-        [ring.middleware.params]))
+        [ring.middleware.params]
+        [clojure.pprint]))
+
 
 (defn secrets []
-  (println "ENV/FACT_KEY:" (System/getenv "FACT_KEY"))
   (if (empty? (System/getenv "FACT_KEY"))
     (conf/dot-factual "factual-auth.yaml")
     {:key (System/getenv "FACT_KEY")
      :secret (System/getenv "FACT_SECRET")}))
 
-
-(def ^:dynamic *secrets* nil)
-
 (defn init! []
-  (when (nil? *secrets*)
-    (let [{:keys [key secret]} (secrets)]
-      (facts/factual! key secret))
-    (println "INIT'd!")
-    (def ^:dynamic *secrets* true)))
+  (let [{:keys [key secret]} (secrets)]
+    (facts/factual! key secret)
+    (println "init!'d!")))
 
 (defn get-places [query]
   (facts/fetch query))
@@ -38,17 +34,11 @@
    "has_detail_page" (if (place :website) "1" "0")
    "payload"         place})
 
-(defn translate [places]
-  (map translate-place places))
-
-(defn get-places-body [query]
-  (println "get-places-body: Q:" query)
+(defn get-body-struct [query]
   (let [places (with-elevations (get-places query))]
-    (println "get-places-body: count:" (count places))
-    (json/generate-string
-     {:status      "OK"
-      :num_results (count places)
-      :results     (translate places)})))
+    {:status      "OK"
+     :num_results (count places)
+     :results     (map translate-place places)}))
 
 ;;Factual: longitude=-118.418249&latitude=34.060106
 (defn params->query
@@ -63,17 +53,13 @@
   (when-let [v (params "search")]   {:q v})))
 
 (defn respond-with-places [{params :params :as req}]
-  (init!)
-  (println "REQ:" req)
-  (println "HANDLER PARAMS:" params)
-  {:status  200
-   :headers {"Content-Type" (if (params "plain")
-                              "text/plain"
-                              "application/mixare-json")}
-   :body
-   ;;(slurp "brandon.json")
-   (get-places-body (params->query params))
-   })
+  (let [body-struct (get-body-struct (params->query params))
+        test? (contains? params "plain")]
+    {:status  200
+     :headers {"Content-Type" (if test? "text/plain" "application/mixare-json")}
+     :body    (if test?
+                (with-out-str (pprint body-struct))
+                (json/generate-string body-struct))}))
 
 (defn handler [{params :params :as req}]
   (println "HANDLER params:" params)
@@ -82,10 +68,11 @@
     (respond-with-places req)
     {:status  200
      :headers {"Content-Type" "text/plain"}
-     :body "Hello! Please send in a latitude and longitude via the query string! version a"}))
+     :body "Hello! Please send in a latitude and longitude via the query string!\nrel: debug?"}))
 
 (def app
   (wrap-params handler))
 
 (defn -main [port]
+  (init!)
   (run-jetty app {:port (Integer. port)}))
