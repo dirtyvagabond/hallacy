@@ -1,9 +1,9 @@
 (ns hallacy.core
-  (:import [hallacy.utils Elevation])
   (:require [factual.api :as facts]
             [cheshire.core :as json]
             [sosueme.conf :as conf])
-  (:use [ring.adapter.jetty :only [run-jetty]]
+  (:use [hallacy.elevations]
+        [ring.adapter.jetty :only [run-jetty]]
         [ring.middleware.params]))
 
 (defn secrets []
@@ -32,7 +32,7 @@
   {"id"              (place :factual_id)
    "lat"             (place :latitude)
    "lng"             (place :longitude)
-   "elevation"       "0"
+   "elevation"       (place :elevation)
    "title"           (place :name)
    "webpage"         (place :website)
    "has_detail_page" (if (place :website) "1" "0")
@@ -43,7 +43,7 @@
 
 (defn get-places-body [query]
   (println "get-places-body: Q:" query)
-  (let [places (get-places query)]
+  (let [places (with-elevations (get-places query))]
     (println "get-places-body: count:" (count places))
     (json/generate-string
      {:status      "OK"
