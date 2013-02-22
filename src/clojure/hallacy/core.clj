@@ -35,7 +35,8 @@
    "elevation"       "0"
    "title"           (place :name)
    "webpage"         (place :website)
-   "has_detail_page" (if (place :website) "1" "0")})
+   "has_detail_page" (if (place :website) "1" "0")
+   "payload"         place})
 
 (defn translate [places]
   (map translate-place places))
