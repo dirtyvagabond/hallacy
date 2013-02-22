@@ -1,5 +1,5 @@
 (ns hallacy.core
-  (:import hallacy.utils.Elevation)
+  (:import [hallacy.utils Elevation])
   (:require [factual.api :as facts]
             [cheshire.core :as json]
             [sosueme.conf :as conf])
@@ -81,7 +81,7 @@
     (respond-with-places req)
     {:status  200
      :headers {"Content-Type" "text/plain"}
-     :body "Hello! Please send in a latitude and longitude via the query string!"}))
+     :body "Hello! Please send in a latitude and longitude via the query string! version a"}))
 
 (def app
   (wrap-params handler))
