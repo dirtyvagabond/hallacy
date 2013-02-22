@@ -1,1 +1,1 @@
-web: lein2 with-profile production trampoline run -m hallacy.core $PORT
+web: lein with-profile production trampoline run -m hallacy.core 5000

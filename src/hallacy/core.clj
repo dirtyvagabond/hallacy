@@ -26,21 +26,22 @@
   (map translate-place places))
 
 (defn get-places-body [query]
-  (println "get-places-body Q:" query)
+  (println "get-places-body: Q:" query)
   (let [places (get-places query)]
+    (println "get-places-body: count:" (count places))
     (json/generate-string
-     {:status "OK"
+     {:status      "OK"
       :num_results (count places)
-      :results (translate places)})))
+      :results     (translate places)})))
 
 ;;Factual: longitude=-118.418249&latitude=34.060106
 (defn params->query
   "Translates raw query params map to a Factual query map"
   [params]
   (merge
-   {:geo {:$circle {:$center [(params "latitude"), (params "longitude")]
-                    :$meters 5000}}
-    :table      "restaurants-us"}
+   {:geo    {:$circle {:$center [(params "latitude"), (params "longitude")]
+                       :$meters 5000}}
+    :table  "restaurants-us"}
   (when-let [v (params "category")] {:filters {:category_ids {:$eq  v}}})
   (when-let [v (params "table")]    {:table v})
   (when-let [v (params "search")]   {:q v})))
