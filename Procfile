@@ -1,1 +1,1 @@
-web: lein with-profile production trampoline run -m hallacy.core 5000
+web: lein trampoline run -m hallacy.core

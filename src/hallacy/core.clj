@@ -40,7 +40,7 @@
   [params]
   (merge
    {:geo    {:$circle {:$center [(params "latitude"), (params "longitude")]
-                       :$meters 5000}}
+                       :$meters 1000}}
     :table  "restaurants-us"}
   (when-let [v (params "category")] {:filters {:category_ids {:$eq  v}}})
   (when-let [v (params "table")]    {:table v})
@@ -53,7 +53,11 @@
    :headers {"Content-Type" (if (params "plain")
                               "text/plain"
                               "application/mixare-json")}
-   :body    (get-places-body (params->query params))})
+   :body
+   ;;(slurp "hallacy.json")
+   (get-places-body (params->query params))
+
+   })
 
 (def app
   (wrap-params handler))
