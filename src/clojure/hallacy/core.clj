@@ -9,7 +9,7 @@
         [clojure.pprint]))
 
 
-(def VERSION "2.0+static2")
+(def VERSION "2.0+mall")
 
 (defn secrets []
   (if (empty? (System/getenv "FACT_KEY"))
@@ -53,7 +53,7 @@
   [params]
   (merge
    {:geo    {:$circle {:$center [(params "latitude"), (params "longitude")]
-                       :$meters 1000}}
+                       :$meters 500000}}
     :table  "restaurants"
     :limit 50}
   (when-let [v (params "category")] {:filters {:category_ids {:$eq  v}}})
@@ -61,9 +61,10 @@
   (when-let [v (params "search")]   {:q v})))
 
 (defn find-places-for-mixare [params]
-  (if (= (params "table") "panic-table")
-    static/PLACES
-    (for-mixare (get-places (params->query params)))))
+  (condp = (params "table")
+        "panic-table"  static/RESTAURANTS
+        "century-city" static/CENTURY-CITY-PLACES
+        (for-mixare (get-places (params->query params)))))
 
 (defn respond-with-places [{params :params}]
   (let [places (find-places-for-mixare params)
