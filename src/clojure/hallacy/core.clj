@@ -68,7 +68,7 @@
     (respond-with-places req)
     {:status  200
      :headers {"Content-Type" "text/plain"}
-     :body "Hello! Please send in a latitude and longitude via the query string!\nrel: debug?"}))
+     :body "Hello! Please send in a latitude and longitude via the query string!\nrel: memo-elvs"}))
 
 (def app
   (wrap-params handler))
