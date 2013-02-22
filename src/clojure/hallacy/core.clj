@@ -9,7 +9,7 @@
         [clojure.pprint]))
 
 
-(def VERSION "2.0+static")
+(def VERSION "2.0+static2")
 
 (defn secrets []
   (if (empty? (System/getenv "FACT_KEY"))
@@ -54,7 +54,7 @@
   (merge
    {:geo    {:$circle {:$center [(params "latitude"), (params "longitude")]
                        :$meters 1000}}
-    :table  "restaurants-us"
+    :table  "restaurants"
     :limit 50}
   (when-let [v (params "category")] {:filters {:category_ids {:$eq  v}}})
   (when-let [v (params "table")]    {:table v})
