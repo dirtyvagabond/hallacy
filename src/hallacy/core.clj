@@ -61,6 +61,7 @@
   (when-let [v (params "search")]   {:q v})))
 
 (defn handler [{params :params :as req}]
+  (init!)
   (println "REQ:" req)
   (println "HANDLER PARAMS:" params)
   {:status  200
