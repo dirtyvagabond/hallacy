@@ -1,1 +1,1 @@
-web: lein trampoline run -m myapp.web
+web: lein trampoline run -m hallacy.core
