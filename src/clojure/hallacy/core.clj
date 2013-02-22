@@ -1,12 +1,15 @@
 (ns hallacy.core
   (:require [factual.api :as facts]
             [cheshire.core :as json]
-            [sosueme.conf :as conf])
+            [sosueme.conf :as conf]
+            [hallacy.static :as static])
   (:use [hallacy.elevations]
         [ring.adapter.jetty :only [run-jetty]]
         [ring.middleware.params]
         [clojure.pprint]))
 
+
+(def VERSION "2.0+static")
 
 (defn secrets []
   (if (empty? (System/getenv "FACT_KEY"))
@@ -22,8 +25,8 @@
 (defn get-places [query]
   (facts/fetch query))
 
-(defn translate-place
-  "Translate a place rec from Factual into something usable by mixair"
+(defn place->mixare
+  "Translate a place rec from Factual into something usable by the mixare lib"
   [place]
   {"id"              (place :factual_id)
    "lat"             (place :latitude)
@@ -34,11 +37,15 @@
    "has_detail_page" (if (place :website) "1" "0")
    "payload"         place})
 
-(defn get-body-struct [query]
-  (let [places (with-elevations (get-places query))]
-    {:status      "OK"
-     :num_results (count places)
-     :results     (map translate-place places)}))
+(defn for-mixare [places]
+  (->> places
+       with-elevations
+       (map place->mixare)))
+
+(defn body-struct [places]
+  {:status      "OK"
+   :num_results (count places)
+   :results     places})
 
 ;;Factual: longitude=-118.418249&latitude=34.060106
 (defn params->query
@@ -47,13 +54,20 @@
   (merge
    {:geo    {:$circle {:$center [(params "latitude"), (params "longitude")]
                        :$meters 1000}}
-    :table  "restaurants-us"}
+    :table  "restaurants-us"
+    :limit 50}
   (when-let [v (params "category")] {:filters {:category_ids {:$eq  v}}})
   (when-let [v (params "table")]    {:table v})
   (when-let [v (params "search")]   {:q v})))
 
-(defn respond-with-places [{params :params :as req}]
-  (let [body-struct (get-body-struct (params->query params))
+(defn find-places-for-mixare [params]
+  (if (= (params "table") "panic-table")
+    static/PLACES
+    (for-mixare (get-places (params->query params)))))
+
+(defn respond-with-places [{params :params}]
+  (let [places (find-places-for-mixare params)
+        body-struct (body-struct places)
         test? (contains? params "plain")]
     {:status  200
      :headers {"Content-Type" (if test? "text/plain" "application/mixare-json")}
@@ -68,11 +82,12 @@
     (respond-with-places req)
     {:status  200
      :headers {"Content-Type" "text/plain"}
-     :body "Hello! Please send in a latitude and longitude via the query string!\nrel: memo-elvs"}))
+     :body (str "Hello! Please send in a latitude and longitude via the query string!\nversion: " VERSION)}))
 
 (def app
   (wrap-params handler))
 
 (defn -main [port]
   (init!)
+  (println "\nRunning Hallacy" VERSION)
   (run-jetty app {:port (Integer. port)}))
