@@ -17,5 +17,6 @@
   :plugins [[lein-ring "0.8.2"]]
   :main hallacy.core
   :aot :all
+  :source-path      "src/clojure"
   :java-source-path "src/java"
   )
