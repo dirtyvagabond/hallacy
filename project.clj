@@ -5,7 +5,9 @@
                  [factual/factual-clojure-driver "1.3.1"]
                  [factual/sosueme "0.0.14"]
                  [cheshire "4.0.1"]
-                 [ring/ring-jetty-adapter "1.1.0"]]
-  ;;:ring {:handler hallacy.core/handler}
-  ;;:plugins [[lein-ring "0.8.2"]]
+                 [ring "1.1.6"]
+                 [ring/ring-jetty-adapter "1.1.6"]]
+  :ring {:handler hallacy.core/handler}
+  :plugins [[lein-ring "0.8.2"]]
+  :main hallacy.core
   )

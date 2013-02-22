@@ -60,7 +60,7 @@
   (when-let [v (params "table")]    {:table v})
   (when-let [v (params "search")]   {:q v})))
 
-(defn handler [{params :params :as req}]
+(defn respond-with-places [{params :params :as req}]
   (init!)
   (println "REQ:" req)
   (println "HANDLER PARAMS:" params)
@@ -71,8 +71,16 @@
    :body
    ;;(slurp "brandon.json")
    (get-places-body (params->query params))
-
    })
+
+(defn handler [{params :params :as req}]
+  (println "HANDLER params:" params)
+  (println "HANDLER req:" req)
+  (if (and params (params "latitude") (params "longitude"))
+    (respond-with-places req)
+    {:status  200
+     :headers {"Content-Type" "text/plain"}
+     :body "Hello! Please send in a latitude and longitude via the query string!"}))
 
 (def app
   (wrap-params handler))
