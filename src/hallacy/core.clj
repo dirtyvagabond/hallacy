@@ -12,8 +12,15 @@
     {:key (System/getenv "FACT_KEY")
      :secret (System/getenv "FACT_SECRET")}))
 
-(let [{:keys [key secret]} (secrets)]
-       (facts/factual! key secret))
+
+(def ^:dynamic *secrets* nil)
+
+(defn init! []
+  (when (nil? *secrets*)
+    (let [{:keys [key secret]} (secrets)]
+      (facts/factual! key secret))
+    (println "INIT'd!")
+    (def ^:dynamic *secrets* true)))
 
 (defn get-places [query]
   (facts/fetch query))
@@ -61,8 +68,8 @@
                               "text/plain"
                               "application/mixare-json")}
    :body
-   (slurp "brandon.json")
-   ;;(get-places-body (params->query params))
+   ;;(slurp "brandon.json")
+   (get-places-body (params->query params))
 
    })
 
